@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  neutts-air:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neutts-air-web
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist uploads and outputs
+      - ./web_interface/uploads:/app/web_interface/uploads
+      - ./web_interface/outputs:/app/web_interface/outputs
+      # Mount samples directory (read-only)
+      - ./samples:/app/samples:ro
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

@@ -1,0 +1,1 @@
+Det finns en sak du behöver lära dig när du använder en AI såsom ChatGPT: att skriva en AI prompt. En AI prompt är en text som en AI kan utgå ifrån när den ska ge dig ett svar. I denna artikel ska vi berätta hur du kan skriva en AI prompt som funkar och ger bra resultat.
