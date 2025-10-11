@@ -2,15 +2,34 @@
 
 Docker containerization for the NeuTTS-Air text-to-speech web interface.
 
+## 🎯 Build Options
+
+**Two build options available:**
+
+1. **Full Build** (Recommended) - Includes llama-cpp-python for GGUF models
+   - Build time: 5-10 minutes
+   - Supports Q4/Q8 quantized models
+   - Better performance
+
+2. **Lite Build** - Faster, smaller, without llama-cpp-python
+   - Build time: 2-3 minutes
+   - Standard models only
+   - Quick testing
+
+📖 See [DOCKER_BUILD_OPTIONS.md](DOCKER_BUILD_OPTIONS.md) for detailed comparison.
+
 ## 🚀 Quick Start
 
 ### Option 1: Using the Management Script (Recommended)
 
 ```bash
-# Build and start (one command)
+# Full build (with llama-cpp-python)
 ./docker-run.sh
 
-# Or use individual commands:
+# Lite build (without llama-cpp-python, faster)
+./docker-run.sh --lite
+
+# Individual commands:
 ./docker-run.sh build     # Build the image
 ./docker-run.sh start     # Start the container
 ./docker-run.sh logs      # View logs

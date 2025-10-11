@@ -9,8 +9,20 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Default to full build
+COMPOSE_FILE="docker-compose.yml"
+BUILD_TYPE="full"
+
+# Check for --lite flag
+if [[ "$1" == "--lite" ]] || [[ "$2" == "--lite" ]]; then
+    COMPOSE_FILE="docker-compose.lite.yml"
+    BUILD_TYPE="lite"
+    shift  # Remove --lite from arguments
+fi
+
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  NeuTTS-Air Docker Management${NC}"
+echo -e "${BLUE}  Build Type: ${BUILD_TYPE}${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -31,8 +43,13 @@ check_docker() {
 
 # Function to build the image
 build() {
-    echo -e "${BLUE}Building Docker image...${NC}"
-    docker-compose build
+    echo -e "${BLUE}Building Docker image (${BUILD_TYPE})...${NC}"
+    if [ "$BUILD_TYPE" == "lite" ]; then
+        echo -e "${YELLOW}Note: Building lite version without llama-cpp-python${NC}"
+    else
+        echo -e "${YELLOW}Note: Building full version with llama-cpp-python (may take 5-10 minutes)${NC}"
+    fi
+    docker-compose -f "$COMPOSE_FILE" build
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Build successful${NC}"
     else
@@ -43,13 +60,19 @@ build() {
 
 # Function to start the container
 start() {
-    echo -e "${BLUE}Starting NeuTTS-Air container...${NC}"
-    docker-compose up -d
+    echo -e "${BLUE}Starting NeuTTS-Air container (${BUILD_TYPE})...${NC}"
+    docker-compose -f "$COMPOSE_FILE" up -d
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Container started successfully${NC}"
         echo ""
         echo -e "${GREEN}Access the web interface at:${NC}"
         echo -e "  ${YELLOW}http://localhost:5000${NC}"
+        echo ""
+        if [ "$BUILD_TYPE" == "full" ]; then
+            echo -e "${GREEN}GGUF models (Q4/Q8) are supported${NC}"
+        else
+            echo -e "${YELLOW}Note: GGUF models not available in lite build${NC}"
+        fi
         echo ""
         echo -e "To view logs: ${YELLOW}./docker-run.sh logs${NC}"
     else
@@ -61,27 +84,27 @@ start() {
 # Function to stop the container
 stop() {
     echo -e "${BLUE}Stopping NeuTTS-Air container...${NC}"
-    docker-compose down
+    docker-compose -f "$COMPOSE_FILE" down
     echo -e "${GREEN}✓ Container stopped${NC}"
 }
 
 # Function to restart the container
 restart() {
     echo -e "${BLUE}Restarting NeuTTS-Air container...${NC}"
-    docker-compose restart
+    docker-compose -f "$COMPOSE_FILE" restart
     echo -e "${GREEN}✓ Container restarted${NC}"
 }
 
 # Function to view logs
 logs() {
     echo -e "${BLUE}Showing logs (Press Ctrl+C to exit)...${NC}"
-    docker-compose logs -f
+    docker-compose -f "$COMPOSE_FILE" logs -f
 }
 
 # Function to show status
 status() {
     echo -e "${BLUE}Container status:${NC}"
-    docker-compose ps
+    docker-compose -f "$COMPOSE_FILE" ps
 }
 
 # Function to clean up
@@ -90,8 +113,8 @@ clean() {
     read -r response
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         echo -e "${BLUE}Cleaning up...${NC}"
-        docker-compose down -v
-        docker rmi neutts-air-neutts-air 2>/dev/null || true
+        docker-compose -f "$COMPOSE_FILE" down -v
+        docker rmi neutts-air-neutts-air neutts-air-neutts-air-lite 2>/dev/null || true
         echo -e "${GREEN}✓ Cleanup complete${NC}"
     else
         echo -e "${YELLOW}Cleanup cancelled${NC}"
@@ -101,7 +124,8 @@ clean() {
 # Function to run bash in container
 shell() {
     echo -e "${BLUE}Opening shell in container...${NC}"
-    docker-compose exec neutts-air bash
+    CONTAINER_NAME=$([ "$BUILD_TYPE" == "lite" ] && echo "neutts-air-web-lite" || echo "neutts-air-web")
+    docker-compose -f "$COMPOSE_FILE" exec neutts-air bash
 }
 
 # Main script
@@ -139,7 +163,10 @@ case "${1:-}" in
         start
         ;;
     *)
-        echo -e "${YELLOW}Usage: $0 {build|start|stop|restart|logs|status|clean|shell}${NC}"
+        echo -e "${YELLOW}Usage: $0 [--lite] {build|start|stop|restart|logs|status|clean|shell}${NC}"
+        echo ""
+        echo "Flags:"
+        echo "  --lite   - Use lightweight build (no llama-cpp-python)"
         echo ""
         echo "Commands:"
         echo "  build    - Build the Docker image"
@@ -151,6 +178,11 @@ case "${1:-}" in
         echo "  clean    - Remove container and image"
         echo "  shell    - Open bash shell in container"
         echo "  (no arg) - Build and start"
+        echo ""
+        echo "Examples:"
+        echo "  $0              # Full build with llama-cpp-python"
+        echo "  $0 --lite       # Lite build without llama-cpp-python"
+        echo "  $0 --lite build # Build lite version only"
         exit 1
         ;;
 esac

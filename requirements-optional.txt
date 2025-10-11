@@ -1,0 +1,9 @@
+# Optional dependencies for enhanced functionality
+
+# For GGUF model support (Q4, Q8 quantized models)
+# Faster inference and lower memory usage
+llama-cpp-python>=0.2.0
+
+# For ONNX decoder support
+# Can improve codec performance
+onnxruntime>=1.16.0
