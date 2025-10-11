@@ -8,8 +8,12 @@ import os
 import sys
 from pathlib import Path
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, Response, stream_with_context
 import soundfile as sf
+import json
+import time
+from queue import Queue
+from threading import Thread
 
 # Add parent directory to path to import neuttsair
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -27,6 +31,9 @@ app.config['OUTPUT_FOLDER'].mkdir(exist_ok=True)
 
 # Global TTS instance (lazy loaded)
 tts_instance = None
+
+# Progress tracking
+progress_queues = {}
 
 
 def get_tts(backbone="neuphonic/neutts-air"):
@@ -78,9 +85,56 @@ def index():
     return render_template('index.html', samples=samples)
 
 
+def send_progress(session_id, step, message, progress):
+    """Send progress update to client"""
+    if session_id in progress_queues:
+        progress_queues[session_id].put({
+            'step': step,
+            'message': message,
+            'progress': progress
+        })
+
+
+def synthesize_task(session_id, input_text, ref_text, ref_audio_path, backbone):
+    """Background task for synthesis"""
+    try:
+        # Step 1: Initialize TTS
+        send_progress(session_id, 1, 'Initializing TTS engine...', 10)
+        tts = get_tts(backbone)
+
+        # Step 2: Encode reference
+        send_progress(session_id, 2, 'Encoding reference audio...', 30)
+        ref_codes = tts.encode_reference(ref_audio_path)
+
+        # Step 3: Generate speech
+        send_progress(session_id, 3, 'Generating speech...', 60)
+        wav = tts.infer(input_text, ref_codes, ref_text)
+
+        # Step 4: Save output
+        send_progress(session_id, 4, 'Saving audio file...', 90)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_filename = f"output_{timestamp}.wav"
+        output_path = app.config['OUTPUT_FOLDER'] / output_filename
+        sf.write(str(output_path), wav, 24000)
+
+        # Complete
+        send_progress(session_id, 5, 'Complete!', 100)
+        progress_queues[session_id].put({
+            'complete': True,
+            'output_file': output_filename,
+            'message': 'Speech synthesized successfully!'
+        })
+
+    except Exception as e:
+        progress_queues[session_id].put({
+            'error': True,
+            'message': str(e)
+        })
+
+
 @app.route('/api/synthesize', methods=['POST'])
 def synthesize():
-    """Synthesize speech from text"""
+    """Start synthesis and return session ID for progress tracking"""
     try:
         # Get form data
         input_text = request.form.get('input_text', '').strip()
@@ -120,36 +174,62 @@ def synthesize():
         if not ref_text:
             return jsonify({'error': 'Reference text is required'}), 400
 
-        # Initialize TTS
-        tts = get_tts(backbone)
+        # Create session ID and progress queue
+        session_id = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        progress_queues[session_id] = Queue()
 
-        # Encode reference
-        print(f"Encoding reference audio: {ref_audio_path}")
-        ref_codes = tts.encode_reference(ref_audio_path)
-
-        # Generate speech
-        print(f"Generating speech for: {input_text[:50]}...")
-        wav = tts.infer(input_text, ref_codes, ref_text)
-
-        # Save output
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_filename = f"output_{timestamp}.wav"
-        output_path = app.config['OUTPUT_FOLDER'] / output_filename
-        sf.write(str(output_path), wav, 24000)
-
-        print(f"Audio saved to: {output_path}")
+        # Start background task
+        thread = Thread(
+            target=synthesize_task,
+            args=(session_id, input_text, ref_text, ref_audio_path, backbone)
+        )
+        thread.daemon = True
+        thread.start()
 
         return jsonify({
-            'success': True,
-            'output_file': output_filename,
-            'message': 'Speech synthesized successfully!'
+            'session_id': session_id
         })
 
     except Exception as e:
-        print(f"Error during synthesis: {str(e)}")
+        print(f"Error starting synthesis: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress/<session_id>')
+def progress(session_id):
+    """Stream progress updates via Server-Sent Events"""
+    def generate():
+        if session_id not in progress_queues:
+            yield f"data: {json.dumps({'error': 'Invalid session ID'})}\n\n"
+            return
+
+        queue = progress_queues[session_id]
+
+        while True:
+            try:
+                # Get progress update (timeout after 30 seconds)
+                update = queue.get(timeout=30)
+                yield f"data: {json.dumps(update)}\n\n"
+
+                # If complete or error, clean up and exit
+                if update.get('complete') or update.get('error'):
+                    del progress_queues[session_id]
+                    break
+
+            except:
+                # Timeout or error - send keepalive
+                yield f"data: {json.dumps({'keepalive': True})}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no'
+        }
+    )
 
 
 @app.route('/api/download/<filename>')

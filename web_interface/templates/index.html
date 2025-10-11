@@ -116,6 +116,14 @@
                 </button>
             </form>
 
+            <!-- Progress Bar -->
+            <div id="progressSection" class="progress-section" style="display: none;">
+                <div class="progress-bar-container">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+                <div id="progressMessage" class="progress-message">Initializing...</div>
+            </div>
+
             <!-- Status Messages -->
             <div id="statusMessage" class="message" style="display: none;"></div>
 
@@ -187,9 +195,14 @@
         const btnText = submitBtn.querySelector('.btn-text');
         const loader = submitBtn.querySelector('.loader');
         const statusMessage = document.getElementById('statusMessage');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressMessage = document.getElementById('progressMessage');
         const audioPlayer = document.getElementById('audioPlayer');
         const audioElement = document.getElementById('audioElement');
         const downloadBtn = document.getElementById('downloadBtn');
+
+        let eventSource = null;
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -216,8 +229,12 @@
             loader.style.display = 'inline-block';
             statusMessage.style.display = 'none';
             audioPlayer.style.display = 'none';
+            progressSection.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressMessage.textContent = 'Starting...';
 
             try {
+                // Start synthesis
                 const response = await fetch('/api/synthesize', {
                     method: 'POST',
                     body: formData
@@ -225,30 +242,88 @@
 
                 const result = await response.json();
 
-                if (response.ok && result.success) {
-                    // Show success message
-                    showMessage('✅ ' + result.message, 'success');
-
-                    // Show audio player
-                    audioElement.src = `/api/play/${result.output_file}`;
-                    audioPlayer.style.display = 'block';
-
-                    // Setup download button
-                    downloadBtn.onclick = () => {
-                        window.location.href = `/api/download/${result.output_file}`;
-                    };
+                if (response.ok && result.session_id) {
+                    // Connect to progress stream
+                    connectToProgress(result.session_id);
                 } else {
-                    showMessage('❌ Error: ' + (result.error || 'Unknown error'), 'error');
+                    throw new Error(result.error || 'Unknown error');
                 }
             } catch (error) {
                 showMessage('❌ Error: ' + error.message, 'error');
-            } finally {
-                // Reset button state
-                submitBtn.disabled = false;
-                btnText.style.display = 'inline';
-                loader.style.display = 'none';
+                resetUI();
             }
         });
+
+        function connectToProgress(sessionId) {
+            // Close existing connection
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            // Create new EventSource connection
+            eventSource = new EventSource(`/api/progress/${sessionId}`);
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                if (data.keepalive) {
+                    // Ignore keepalive messages
+                    return;
+                }
+
+                if (data.error) {
+                    showMessage('❌ Error: ' + data.message, 'error');
+                    resetUI();
+                    eventSource.close();
+                    return;
+                }
+
+                if (data.complete) {
+                    // Synthesis complete
+                    progressBar.style.width = '100%';
+                    progressMessage.textContent = data.message;
+
+                    // Show success message
+                    setTimeout(() => {
+                        showMessage('✅ ' + data.message, 'success');
+                        progressSection.style.display = 'none';
+
+                        // Show audio player
+                        audioElement.src = `/api/play/${data.output_file}`;
+                        audioPlayer.style.display = 'block';
+
+                        // Setup download button
+                        downloadBtn.onclick = () => {
+                            window.location.href = `/api/download/${data.output_file}`;
+                        };
+
+                        resetUI();
+                    }, 500);
+
+                    eventSource.close();
+                    return;
+                }
+
+                // Update progress
+                if (data.progress !== undefined) {
+                    progressBar.style.width = data.progress + '%';
+                    progressMessage.textContent = data.message;
+                }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('EventSource error:', error);
+                showMessage('❌ Connection error. Please try again.', 'error');
+                resetUI();
+                eventSource.close();
+            };
+        }
+
+        function resetUI() {
+            submitBtn.disabled = false;
+            btnText.style.display = 'inline';
+            loader.style.display = 'none';
+        }
 
         function showMessage(text, type) {
             statusMessage.textContent = text;

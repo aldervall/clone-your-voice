@@ -15,7 +15,8 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir flask
+    pip install --no-cache-dir flask && \
+    pip install --no-cache-dir llama-cpp-python
 
 # Copy the entire project
 COPY . .
