@@ -1,45 +1,47 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-*.egg-info/
-dist/
-build/
-
-# Virtual environments
 .venv/
 venv/
 ENV/
 env/
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Git
-.git/
-.gitignore
+# Documentation (keep main README)
+docs/
+DOCKER_README.md
+DOCKER_BUILD_OPTIONS.md
+ARCHITECTURE.md
+
+# Docker
+Dockerfile.lite
+docker-compose.lite.yml
+
+# Generated data (will be mounted as volumes)
+web_interface/uploads/*
+web_interface/outputs/*
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Generated files
-web_interface/outputs/*.wav
-web_interface/uploads/*.wav
-output.wav
+# Logs
+*.log
 
-# Pre-commit
-.pre-commit-config.yaml
-
-# Documentation
-README.md
-web_interface/README.md
-LICENSE
-
-# Keep samples directory - we want these in the image
-!samples/
+# Test files
+tests/
+test_*.py

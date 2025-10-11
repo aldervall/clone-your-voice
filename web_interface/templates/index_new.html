@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuTTS-Air - Voice Cloning</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .step {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .step.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .record-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 48px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px auto;
+            display: block;
+        }
+        .record-button:hover {
+            transform: scale(1.1);
+        }
+        .record-button.recording {
+            background: #e74c3c;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .prompt-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .prompt-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+        .timer {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s;
+        }
+        .step-dot.active {
+            background: #667eea;
+            transform: scale(1.5);
+        }
+        .audio-visualizer {
+            width: 100%;
+            height: 60px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+        .visualizer-bar {
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 2px;
+            transition: height 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ Clone Your Voice</h1>
+            <p class="subtitle">in 3 Easy Steps</p>
+        </header>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step-dot active" data-step="1"></div>
+            <div class="step-dot" data-step="2"></div>
+            <div class="step-dot" data-step="3"></div>
+        </div>
+
+        <!-- Step 1: Record Voice -->
+        <div class="card step active" id="step1">
+            <h2>Step 1: Record Your Voice</h2>
+            <p>Read the following text aloud while recording:</p>
+
+            <div class="prompt-box">
+                <p class="prompt-text" id="promptText">Loading prompt...</p>
+            </div>
+
+            <div class="timer" id="timer" style="display: none;">10</div>
+
+            <button type="button" class="record-button" id="recordButton" title="Click to start recording">
+                🎤
+            </button>
+
+            <div class="audio-visualizer" id="visualizer" style="display: none;">
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+            </div>
+
+            <p style="text-align: center; color: #666;" id="recordStatus">
+                Click the microphone to start recording
+            </p>
+
+            <audio id="playbackAudio" controls style="display: none; width: 100%; margin: 20px 0;"></audio>
+
+            <button type="button" class="btn btn-primary" id="nextToStep2" style="display: none;" onclick="goToStep(2)">
+                Next: Generate Speech →
+            </button>
+        </div>
+
+        <!-- Step 2: Enter Text -->
+        <div class="card step" id="step2">
+            <h2>Step 2: Enter Text to Synthesize</h2>
+            <p>Type any text you want to hear in your cloned voice:</p>
+
+            <div class="form-group">
+                <textarea
+                    id="synthesizeText"
+                    rows="6"
+                    placeholder="Enter the text you want to convert to your voice..."
+                    required
+                ></textarea>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progressSection" class="progress-section" style="display: none;">
+                <div class="progress-bar-container">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+                <div id="progressMessage" class="progress-message">Initializing...</div>
+                <div class="working-indicator">Still working, please wait</div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="goToStep(1)">
+                    ← Back
+                </button>
+                <button type="button" class="btn btn-primary" id="generateButton" onclick="generateSpeech()">
+                    Generate Speech 🎵
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Download -->
+        <div class="card step" id="step3">
+            <h2>Step 3: Listen & Download</h2>
+            <p>Your synthesized speech is ready!</p>
+
+            <div id="audioPlayer" style="margin: 20px 0;">
+                <audio id="resultAudio" controls style="width: 100%;"></audio>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="goToStep(2)">
+                    ← Generate Another
+                </button>
+                <button type="button" class="btn btn-primary" id="downloadButton">
+                    Download Audio 💾
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="location.reload()">
+                    Start Over 🔄
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Reference prompts pool (longer sentences for better voice capture)
+        const prompts = [
+            "The quick brown fox jumps over the lazy dog while the moon shines brightly in the night sky.",
+            "Technology is rapidly changing the world in amazing and unexpected ways every single day.",
+            "This is a comprehensive test of the advanced voice cloning system that uses artificial intelligence.",
+            "Artificial intelligence and machine learning are truly fascinating fields that continue to evolve.",
+            "Welcome to the exciting future of speech synthesis and natural language processing technology.",
+            "The sun rises early in the morning sky, painting beautiful colors across the horizon.",
+            "Reading books regularly helps expand our knowledge and improves our understanding of the world.",
+            "Music brings joy and happiness to people everywhere, connecting cultures across the globe.",
+            "Learning new things every day keeps life interesting and helps us grow as individuals.",
+            "The powerful ocean waves crash rhythmically against the rocky shore throughout the evening."
+        ];
+
+        // Global variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordedBlob = null;
+        let currentPrompt = "";
+        let recordingDuration = 10000; // 10 seconds
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load random prompt
+            currentPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+            document.getElementById('promptText').textContent = currentPrompt;
+
+            // Setup record button
+            document.getElementById('recordButton').addEventListener('click', toggleRecording);
+        });
+
+        // Step navigation
+        function goToStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.step-dot').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('step' + stepNumber).classList.add('active');
+            document.querySelector(`.step-dot[data-step="${stepNumber}"]`).classList.add('active');
+        }
+
+        // Recording functions
+        async function toggleRecording() {
+            const button = document.getElementById('recordButton');
+            const status = document.getElementById('recordStatus');
+
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const button = document.getElementById('recordButton');
+                const status = document.getElementById('recordStatus');
+                const timer = document.getElementById('timer');
+                const visualizer = document.getElementById('visualizer');
+
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(recordedBlob);
+                    const playback = document.getElementById('playbackAudio');
+                    playback.src = audioUrl;
+                    playback.style.display = 'block';
+                    document.getElementById('nextToStep2').style.display = 'block';
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                button.classList.add('recording');
+                button.textContent = '⏹️';
+                status.textContent = 'Recording... Read the prompt above!';
+                visualizer.style.display = 'flex';
+                animateVisualizer();
+
+                // Countdown timer
+                let countdown = 10;
+                timer.style.display = 'block';
+                timer.textContent = countdown;
+
+                const countdownInterval = setInterval(() => {
+                    countdown--;
+                    timer.textContent = countdown;
+                    if (countdown <= 0) {
+                        clearInterval(countdownInterval);
+                        timer.style.display = 'none';
+                    }
+                }, 1000);
+
+                // Auto-stop after duration
+                setTimeout(() => {
+                    if (mediaRecorder.state === 'recording') {
+                        stopRecording();
+                    }
+                }, recordingDuration);
+
+            } catch (error) {
+                alert('Error accessing microphone: ' + error.message);
+            }
+        }
+
+        function stopRecording() {
+            const button = document.getElementById('recordButton');
+            const status = document.getElementById('recordStatus');
+            const visualizer = document.getElementById('visualizer');
+
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                button.classList.remove('recording');
+                button.textContent = '🎤';
+                status.textContent = 'Recording complete! Listen to your recording below.';
+                visualizer.style.display = 'none';
+            }
+        }
+
+        function animateVisualizer() {
+            const bars = document.querySelectorAll('.visualizer-bar');
+            setInterval(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    bars.forEach(bar => {
+                        const height = Math.random() * 40 + 10;
+                        bar.style.height = height + 'px';
+                    });
+                }
+            }, 100);
+        }
+
+        // Generate speech
+        async function generateSpeech() {
+            if (!recordedBlob) {
+                alert('Please record your voice first!');
+                return;
+            }
+
+            const text = document.getElementById('synthesizeText').value.trim();
+            if (!text) {
+                alert('Please enter text to synthesize!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('input_text', text);
+            formData.append('ref_text', currentPrompt);
+            formData.append('ref_audio', recordedBlob, 'recording.wav');
+            formData.append('use_sample', 'false');
+            formData.append('backbone', 'neuphonic/neutts-air');
+
+            const progressSection = document.getElementById('progressSection');
+            const progressBar = document.getElementById('progressBar');
+            const progressMessage = document.getElementById('progressMessage');
+            const generateButton = document.getElementById('generateButton');
+
+            progressSection.style.display = 'block';
+            progressBar.classList.add('active');
+            generateButton.disabled = true;
+
+            try {
+                // Start synthesis
+                const response = await fetch('/api/synthesize', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Monitor progress
+                const eventSource = new EventSource(`/api/progress/${data.session_id}`);
+
+                eventSource.onmessage = function(event) {
+                    const update = JSON.parse(event.data);
+
+                    if (update.progress !== undefined) {
+                        progressBar.style.width = update.progress + '%';
+                        progressMessage.textContent = update.message;
+                    }
+
+                    // Handle keepalive messages (show that we're still working)
+                    if (update.keepalive) {
+                        progressMessage.textContent = progressMessage.textContent || 'Processing...';
+                    }
+
+                    if (update.complete) {
+                        eventSource.close();
+                        progressBar.classList.remove('active');
+                        progressSection.style.display = 'none';
+                        generateButton.disabled = false;
+
+                        // Show result
+                        const resultAudio = document.getElementById('resultAudio');
+                        resultAudio.src = `/api/play/${update.output_file}`;
+                        document.getElementById('downloadButton').onclick = () => {
+                            window.location.href = `/api/download/${update.output_file}`;
+                        };
+                        goToStep(3);
+                    }
+
+                    if (update.error) {
+                        eventSource.close();
+                        progressBar.classList.remove('active');
+                        alert('Error: ' + update.message);
+                        progressSection.style.display = 'none';
+                        generateButton.disabled = false;
+                    }
+                };
+
+                eventSource.onerror = function() {
+                    eventSource.close();
+                    alert('Connection error. Please try again.');
+                    progressSection.style.display = 'none';
+                    generateButton.disabled = false;
+                };
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                progressSection.style.display = 'none';
+                generateButton.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

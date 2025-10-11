@@ -193,11 +193,76 @@ input[type="file"]:focus {
     font-size: 0.9rem;
 }
 
+.progress-bar.active {
+    animation: progressPulse 1s ease-in-out infinite;
+    position: relative;
+    overflow: visible;
+}
+
+.progress-bar.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: progressShine 2s linear infinite;
+}
+
+@keyframes progressPulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+    }
+    50% {
+        opacity: 0.85;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+    }
+}
+
+@keyframes progressShine {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(200%);
+    }
+}
+
 .progress-message {
     text-align: center;
     color: #555;
     font-weight: 500;
     font-size: 0.95rem;
+}
+
+.progress-section .working-indicator {
+    text-align: center;
+    color: #667eea;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+.working-indicator::after {
+    content: '';
+    animation: workingDots 1.5s steps(4, end) infinite;
+}
+
+@keyframes workingDots {
+    0%, 20% {
+        content: '';
+    }
+    40% {
+        content: '.';
+    }
+    60% {
+        content: '..';
+    }
+    80%, 100% {
+        content: '...';
+    }
 }
 
 /* Messages */
@@ -269,9 +334,17 @@ footer a:hover {
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
     header h1 {
         font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
     }
 
     .card {
@@ -281,5 +354,82 @@ footer a:hover {
     .radio-group {
         flex-direction: column;
         gap: 10px;
+    }
+
+    /* Mobile-friendly buttons */
+    .btn {
+        width: 100%;
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    /* Step indicator */
+    .step-indicator {
+        margin: 20px 0;
+    }
+
+    .step-dot {
+        width: 10px;
+        height: 10px;
+    }
+
+    /* Record button */
+    .record-button {
+        width: 100px;
+        height: 100px;
+        font-size: 40px;
+    }
+
+    /* Timer */
+    .timer {
+        font-size: 28px;
+    }
+
+    /* Prompt box */
+    .prompt-box {
+        padding: 15px;
+    }
+
+    .prompt-text {
+        font-size: 16px;
+    }
+
+    /* Progress bar */
+    .progress-bar-container {
+        height: 25px;
+    }
+
+    .progress-message {
+        font-size: 0.9rem;
+    }
+
+    /* Button groups */
+    div[style*="display: flex"] {
+        flex-direction: column !important;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.6rem;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .record-button {
+        width: 90px;
+        height: 90px;
+        font-size: 36px;
+    }
+
+    .timer {
+        font-size: 24px;
+    }
+
+    .prompt-text {
+        font-size: 14px;
     }
 }

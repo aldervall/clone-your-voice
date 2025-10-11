@@ -1,264 +1,112 @@
-# NeuTTS Air ☁️ + Web Interface
+# 🎙️ Clone Your Voice
 
-> **This fork adds a beautiful web interface and Docker support for easy deployment!**
+> **AI-powered voice cloning made simple**
 
-HuggingFace 🤗: [Model](https://huggingface.co/neuphonic/neutts-air), [Q8 GGUF](https://huggingface.co/neuphonic/neutts-air-q8-gguf), [Q4 GGUF](https://huggingface.co/neuphonic/neutts-air-q4-gguf) [Spaces](https://huggingface.co/spaces/neuphonic/neutts-air)
+Record your voice for 10 seconds, then generate speech in your cloned voice with any text. Browser-based recording, no microphone setup required.
 
-[Original Demo Video](https://github.com/user-attachments/assets/020547bc-9e3e-440f-b016-ae61ca645184)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-*Original model created by [Neuphonic](http://neuphonic.com/) - building faster, smaller, on-device voice AI*
+## ✨ Features
 
-State-of-the-art Voice AI has been locked behind web APIs for too long. NeuTTS Air is the world's first super-realistic, on-device, TTS speech language model with instant voice cloning. Built off a 0.5B LLM backbone, NeuTTS Air brings natural-sounding speech, real-time performance, built-in security and speaker cloning to your local device - unlocking a new category of embedded voice agents, assistants, toys, and compliance-safe apps.
-
-## ✨ What's New in This Fork
-
-- 🌐 **Beautiful Web Interface** - Modern, responsive UI with gradient design
-- 🐳 **Docker Support** - One-command deployment with docker-compose
-- 🎨 **Easy to Use** - No command-line required, just open your browser
-- 📦 **Ready to Deploy** - Production-ready configuration included
-- 📖 **Comprehensive Docs** - Detailed guides for Docker, web interface, and architecture
-
-**Get started in seconds:**
-```bash
-git clone https://github.com/aldervall/neutts-air-web.git
-cd neutts-air-web
-./docker-run.sh
-# Open http://localhost:5000
-```
-
-## Key Features
-
-- 🗣Best-in-class realism for its size - produces natural, ultra-realistic voices that sound human
-- 📱Optimised for on-device deployment - provided in GGML format, ready to run on phones, laptops, or even Raspberry Pis
-- 👫Instant voice cloning - create your own speaker with as little as 3 seconds of audio
-- 🚄Simple LM + codec architecture built off a 0.5B backbone - the sweet spot between speed, size, and quality for real-world applications
-
-> [!CAUTION]
-> Websites like neutts.com are popping up and they're not affliated with Neuphonic, our github or this repo.
->
-> We are on neuphonic.com only. Please be careful out there! 🙏
-
-## Model Details
-
-NeuTTS Air is built off Qwen 0.5B - a lightweight yet capable language model optimised for text understanding and generation - as well as a powerful combination of technologies designed for efficiency and quality:
-- **Supported Languages**: English
-- **Audio Codec**: [NeuCodec](https://huggingface.co/neuphonic/neucodec) - our 50hz neural audio codec that achieves exceptional audio quality at low bitrates using a single codebook
-- **Context Window**: 2048 tokens, enough for processing ~30 seconds of audio (including prompt duration)
-- **Format**: Available in GGML format for efficient on-device inference
-- **Responsibility**: Watermarked outputs
-- **Inference Speed**: Real-time generation on mid-range devices
-- **Power Consumption**: Optimised for mobile and embedded devices
+- 🎤 **Browser Recording** - No microphone setup, record directly in your browser
+- 🤖 **AI Voice Cloning** - Powered by NeuTTS-Air (Qwen 0.5B backbone)
+- 📝 **Auto-Generated Prompts** - Read a random sentence, we handle the rest
+- 🎵 **Text-to-Speech** - Generate speech from any text in your voice
+- 📱 **Mobile Friendly** - Works on phones, tablets, and desktops
+- 🐳 **Docker Ready** - One-command deployment
+- 💾 **Persistent Storage** - Your recordings and outputs are saved
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (Recommended) 🐳
-
-The easiest way to get started - no manual dependency installation required!
+### Docker (Recommended)
 
 ```bash
 # Clone the repository
-git clone https://github.com/aldervall/neutts-air-web.git
-cd neutts-air-web
+git clone https://github.com/aldervall/clone-your-voice.git
+cd clone-your-voice
 
-# Build and start with one command
-./docker-run.sh
-
-# Or use docker-compose directly
+# Start with Docker Compose
 docker-compose up -d
+
+# Open in browser
+open http://localhost:5000
 ```
 
-**Access the web interface:** Open http://localhost:5000 in your browser
+**That's it!** The interface is ready to use.
 
-**Features:**
-- 🎤 Voice cloning with instant results
-- 📝 Text-to-speech synthesis
-- 🎵 Live audio playback
-- 💾 Download generated audio
-- 🧠 Multiple model options
+See [QUICKSTART.md](QUICKSTART.md) for more details.
 
-**Manage the container:**
-```bash
-./docker-run.sh logs      # View logs
-./docker-run.sh stop      # Stop container
-./docker-run.sh restart   # Restart container
-./docker-run.sh status    # Check status
-./docker-run.sh clean     # Remove container and image
-```
+## 🎯 How It Works
 
-📖 See [DOCKER_README.md](DOCKER_README.md) for detailed Docker documentation.
+### 3 Simple Steps
 
-### Option 2: Web Interface (Python) 🌐
+**Step 1: Record Your Voice** (10 seconds)
+- Click the microphone button
+- Read the displayed prompt aloud
+- Preview your recording
 
-Run the web interface directly with Python:
+**Step 2: Generate Speech**
+- Type any text you want to hear
+- Click "Generate Speech"
+- Wait for AI processing (~10-30 seconds)
 
-```bash
-# Clone the repository
-git clone https://github.com/aldervall/neutts-air-web.git
-cd neutts-air-web
+**Step 3: Download**
+- Listen to your generated audio
+- Download the file
+- Generate more!
 
-# Install espeak (required)
-# Mac OS
-brew install espeak
+## 📖 Documentation
 
-# Ubuntu/Debian
-sudo apt install espeak
+- [Quick Start Guide](QUICKSTART.md) - Get running in 5 minutes
+- [Docker Deployment](DOCKER_DEPLOYMENT.md) - Complete deployment guide
 
-# Create virtual environment and install dependencies
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install flask
+## 🛠️ Technology Stack
 
-# Start the web server
-cd web_interface
-./start.sh
-```
+- **AI Model**: [NeuTTS-Air](https://github.com/neuphonic/neutts-air) - Qwen 0.5B backbone
+- **Audio Codec**: NeuCodec (50Hz neural codec)
+- **Backend**: Python 3.11 + Flask
+- **Frontend**: Vanilla JavaScript + CSS
+- **Deployment**: Docker + Docker Compose
 
-**Access the web interface:** Open http://localhost:5000 in your browser
+## 📊 System Requirements
 
-📖 See [web_interface/README.md](web_interface/README.md) for web interface documentation.
+**Minimum:**
+- 2 CPU cores, 2GB RAM, 5GB disk
 
-### Option 3: Command Line (CLI) 💻
+**Recommended:**
+- 4 CPU cores, 4GB RAM, 10GB disk
 
-Use the original CLI for scripting and automation:
+**Note:** No GPU required! Runs on CPU.
 
-```bash
-# Clone the repository
-git clone https://github.com/aldervall/neutts-air-web.git
-cd neutts-air-web
+## 🐛 Troubleshooting
 
-# Install espeak
-# Mac OS: brew install espeak
-# Ubuntu/Debian: sudo apt install espeak
-# Windows: See note below
+See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed troubleshooting.
 
-# Install Python dependencies
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+Common issues:
+- **Port in use**: Change port in `docker-compose.yml`
+- **Out of memory**: Increase memory limit in `docker-compose.yml`
+- **Slow generation**: First run takes longer (model loading)
 
-# Run basic example
-python -m examples.basic_example \
-  --input_text "My name is Dave, and um, I'm from London" \
-  --ref_audio samples/dave.wav \
-  --ref_text samples/dave.txt
-```
+## 🤝 Contributing
 
-**Platform-specific espeak setup:**
+Contributions welcome! Fork, make changes, submit PR.
 
-<details>
-<summary>Mac users (click to expand)</summary>
+## 📝 License
 
-You may need to configure espeak library path:
-```python
-from phonemizer.backend.espeak.wrapper import EspeakWrapper
-_ESPEAK_LIBRARY = '/opt/homebrew/Cellar/espeak/1.48.04_1/lib/libespeak.1.1.48.dylib'
-EspeakWrapper.set_library(_ESPEAK_LIBRARY)
-```
-</details>
+MIT License - see [LICENSE](LICENSE)
 
-<details>
-<summary>Windows users (click to expand)</summary>
+## 🙏 Acknowledgments
 
-Configure espeak environment variables:
-```pwsh
-$env:PHONEMIZER_ESPEAK_LIBRARY = "c:\Program Files\eSpeak NG\libespeak-ng.dll"
-$env:PHONEMIZER_ESPEAK_PATH = "c:\Program Files\eSpeak NG"
-setx PHONEMIZER_ESPEAK_LIBRARY "c:\Program Files\eSpeak NG\libespeak-ng.dll"
-setx PHONEMIZER_ESPEAK_PATH "c:\Program Files\eSpeak NG"
-```
-</details>
+- [NeuTTS-Air](https://github.com/neuphonic/neutts-air) - Core TTS engine
+- [Neuphonic](https://neuphonic.com/) - AI model development
 
-**Optional performance optimizations:**
-```bash
-# For GGUF models (faster)
-pip install llama-cpp-python
+## 📧 Contact
 
-# For ONNX decoder
-pip install onnxruntime
-```
+- GitHub: [@aldervall](https://github.com/aldervall)
+- Issues: [Report here](https://github.com/aldervall/clone-your-voice/issues)
 
-To specify a model, add the `--backbone` argument. Available models: [NeuTTS-Air HuggingFace collection](https://huggingface.co/collections/neuphonic/neutts-air-68cc14b7033b4c56197ef350).
+---
 
-📖 See [QUICK_START.md](QUICK_START.md) for comparison of all methods.
-
-### One-Code Block Usage
-
-```python
-from neuttsair.neutts import NeuTTSAir
-import soundfile as sf
-
-tts = NeuTTSAir(
-   backbone_repo="neuphonic/neutts-air", # or 'neutts-air-q4-gguf' with llama-cpp-python installed
-   backbone_device="cpu",
-   codec_repo="neuphonic/neucodec",
-   codec_device="cpu"
-)
-input_text = "My name is Dave, and um, I'm from London."
-
-ref_text = "samples/dave.txt"
-ref_audio_path = "samples/dave.wav"
-
-ref_text = open(ref_text, "r").read().strip()
-ref_codes = tts.encode_reference(ref_audio_path)
-
-wav = tts.infer(input_text, ref_codes, ref_text)
-sf.write("test.wav", wav, 24000)
-```
-
-## Preparing References for Cloning
-
-NeuTTS Air requires two inputs:
-
-1. A reference audio sample (`.wav` file)
-2. A text string
-
-The model then synthesises the text as speech in the style of the reference audio. This is what enables NeuTTS Air’s instant voice cloning capability.
-
-### Example Reference Files
-
-You can find some ready-to-use samples in the `examples` folder:
-
-- `samples/dave.wav`
-- `samples/jo.wav`
-
-### Guidelines for Best Results
-
-For optimal performance, reference audio samples should be:
-
-1. **Mono channel**
-2. **16-44 kHz sample rate**
-3. **3–15 seconds in length**
-4. **Saved as a `.wav` file**
-5. **Clean** — minimal to no background noise
-6. **Natural, continuous speech** — like a monologue or conversation, with few pauses, so the model can capture tone effectively
-
-## Guidelines for minimizing Latency
-
-For optimal performance on-device:
-
-1. Use the GGUF model backbones
-2. Pre-encode references
-3. Use the [onnx codec decoder](https://huggingface.co/neuphonic/neucodec-onnx-decoder)
-
-Take a look at this example [examples README](examples/README.md###minimal-latency-example) to get started.
-
-## Responsibility
-
-Every audio file generated by NeuTTS Air includes [Perth (Perceptual Threshold) Watermarker](https://github.com/resemble-ai/perth).
-
-## Disclaimer
-
-Don't use this model to do bad things… please.
-
-## Developer Requirements
-
-To run the pre commit hooks to contribute to this project run:
-
-```bash
-pip install pre-commit
-```
-Then:
-```bash
-pre-commit install
-```
+**Clone Your Voice** - *AI-powered voice cloning made simple* 🎙️

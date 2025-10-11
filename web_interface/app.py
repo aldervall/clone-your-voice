@@ -14,6 +14,8 @@ import json
 import time
 from queue import Queue
 from threading import Thread
+import numpy as np
+import re
 
 # Add parent directory to path to import neuttsair
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -80,7 +82,12 @@ def get_sample_files():
 
 @app.route('/')
 def index():
-    """Main page"""
+    """Main page - new streamlined interface"""
+    return render_template('index_new.html')
+
+@app.route('/old')
+def index_old():
+    """Old interface (for reference)"""
     samples = get_sample_files()
     return render_template('index.html', samples=samples)
 
@@ -95,6 +102,82 @@ def send_progress(session_id, step, message, progress):
         })
 
 
+def split_text_into_chunks(text, max_tokens=1200):
+    """
+    Split text into chunks that fit within the model's context window.
+    Uses sentence boundaries for natural splits.
+
+    Args:
+        text: Input text to split
+        max_tokens: Maximum tokens per chunk (default 1200 to leave large margin)
+
+    Returns:
+        List of text chunks
+    """
+    # Very conservative estimate for tokenization
+    # The model counts tokens including prompt, so we need a large safety margin
+    # Rough estimate: 1 token ≈ 1 character (very conservative)
+    max_chars = max_tokens
+
+    # If text is short enough, return as is
+    if len(text) <= max_chars:
+        return [text]
+
+    # Split into sentences (handle multiple languages)
+    sentences = re.split(r'(?<=[.!?।॥。！？])\s+', text)
+
+    chunks = []
+    current_chunk = []
+    current_length = 0
+
+    for sentence in sentences:
+        sentence_length = len(sentence)
+
+        # If single sentence is too long, split it further
+        if sentence_length > max_chars:
+            # If we have accumulated sentences, save them first
+            if current_chunk:
+                chunks.append(' '.join(current_chunk))
+                current_chunk = []
+                current_length = 0
+
+            # Split long sentence by commas or clauses
+            parts = re.split(r'([,;:])\s*', sentence)
+            temp_part = []
+            temp_length = 0
+
+            for part in parts:
+                part_length = len(part)
+                if temp_length + part_length > max_chars and temp_part:
+                    chunks.append(''.join(temp_part))
+                    temp_part = [part]
+                    temp_length = part_length
+                else:
+                    temp_part.append(part)
+                    temp_length += part_length
+
+            if temp_part:
+                chunks.append(''.join(temp_part))
+
+        # If adding this sentence exceeds limit, start new chunk
+        elif current_length + sentence_length > max_chars:
+            if current_chunk:
+                chunks.append(' '.join(current_chunk))
+            current_chunk = [sentence]
+            current_length = sentence_length
+
+        # Add sentence to current chunk
+        else:
+            current_chunk.append(sentence)
+            current_length += sentence_length + 1  # +1 for space
+
+    # Add remaining chunk
+    if current_chunk:
+        chunks.append(' '.join(current_chunk))
+
+    return chunks
+
+
 def synthesize_task(session_id, input_text, ref_text, ref_audio_path, backbone):
     """Background task for synthesis"""
     try:
@@ -103,29 +186,65 @@ def synthesize_task(session_id, input_text, ref_text, ref_audio_path, backbone):
         tts = get_tts(backbone)
 
         # Step 2: Encode reference
-        send_progress(session_id, 2, 'Encoding reference audio...', 30)
+        send_progress(session_id, 2, 'Encoding reference audio...', 20)
         ref_codes = tts.encode_reference(ref_audio_path)
+        print(f"Reference audio encoded to {ref_codes.shape} shape, {ref_codes.numel()} total tokens")
 
-        # Step 3: Generate speech
-        send_progress(session_id, 3, 'Generating speech...', 60)
-        wav = tts.infer(input_text, ref_codes, ref_text)
+        # Step 3: Split text into chunks if needed
+        send_progress(session_id, 3, 'Processing text...', 30)
+        print(f"Input text length: {len(input_text)} characters")
+        chunks = split_text_into_chunks(input_text, max_tokens=1200)
+        total_chunks = len(chunks)
+        print(f"Split into {total_chunks} chunks")
+        for i, chunk in enumerate(chunks):
+            print(f"  Chunk {i+1}: {len(chunk)} characters")
 
-        # Step 4: Save output
-        send_progress(session_id, 4, 'Saving audio file...', 90)
+        if total_chunks > 1:
+            send_progress(
+                session_id, 3,
+                f'Text split into {total_chunks} chunks for processing...',
+                35
+            )
+
+        # Step 4: Generate speech for each chunk
+        all_wavs = []
+        for i, chunk in enumerate(chunks):
+            progress = 40 + (i / total_chunks) * 40  # Progress from 40% to 80%
+            send_progress(
+                session_id, 4,
+                f'Generating speech (chunk {i+1}/{total_chunks})...',
+                int(progress)
+            )
+            wav = tts.infer(chunk, ref_codes, ref_text)
+            all_wavs.append(wav)
+
+        # Step 5: Combine audio chunks
+        send_progress(session_id, 5, 'Combining audio chunks...', 85)
+        if len(all_wavs) > 1:
+            # Concatenate all audio chunks
+            final_wav = np.concatenate(all_wavs)
+        else:
+            final_wav = all_wavs[0]
+
+        # Step 6: Save output
+        send_progress(session_id, 6, 'Saving audio file...', 95)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         output_filename = f"output_{timestamp}.wav"
         output_path = app.config['OUTPUT_FOLDER'] / output_filename
-        sf.write(str(output_path), wav, 24000)
+        sf.write(str(output_path), final_wav, 24000)
 
         # Complete
-        send_progress(session_id, 5, 'Complete!', 100)
+        send_progress(session_id, 7, 'Complete!', 100)
         progress_queues[session_id].put({
             'complete': True,
             'output_file': output_filename,
-            'message': 'Speech synthesized successfully!'
+            'message': f'Speech synthesized successfully! ({total_chunks} chunk{"s" if total_chunks > 1 else ""})'
         })
 
     except Exception as e:
+        import traceback
+        error_msg = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"Synthesis error: {error_msg}")
         progress_queues[session_id].put({
             'error': True,
             'message': str(e)
@@ -141,7 +260,8 @@ def synthesize():
         ref_text = request.form.get('ref_text', '').strip()
         use_sample = request.form.get('use_sample', 'false') == 'true'
         sample_name = request.form.get('sample_name', '')
-        backbone = request.form.get('backbone', 'neuphonic/neutts-air')
+        # Force standard model (no GGUF)
+        backbone = 'neuphonic/neutts-air'
 
         if not input_text:
             return jsonify({'error': 'Input text is required'}), 400
