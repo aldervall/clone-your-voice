@@ -13,6 +13,9 @@ __pycache__/
 venv/
 ENV/
 env/
+*.egg-info/
+dist/
+build/
 
 # IDE
 .vscode/
@@ -23,17 +26,19 @@ env/
 
 # Documentation (keep main README)
 docs/
-DOCKER_README.md
-DOCKER_BUILD_OPTIONS.md
-ARCHITECTURE.md
+*.md
+!README.md
 
 # Docker
+Dockerfile.standard
 Dockerfile.lite
-docker-compose.lite.yml
+docker-compose.*.yml
 
 # Generated data (will be mounted as volumes)
 web_interface/uploads/*
 web_interface/outputs/*
+!web_interface/uploads/.gitkeep
+!web_interface/outputs/.gitkeep
 
 # OS
 .DS_Store
@@ -45,3 +50,9 @@ Thumbs.db
 # Test files
 tests/
 test_*.py
+*_test.py
+
+# Backups
+*.bak
+*.backup
+*~

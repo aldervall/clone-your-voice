@@ -1,12 +1,12 @@
 version: '3.8'
 
 services:
-  neutts-air:
+  clone-my-voice:
     build:
       context: .
-      dockerfile: Dockerfile.standard
-    image: neutts-air-voice-cloning:latest
-    container_name: neutts-air-web
+      dockerfile: Dockerfile
+    image: clone-my-voice:2.0
+    container_name: clone-my-voice-2.0
     ports:
       - "5000:5000"
     volumes:
@@ -25,11 +25,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    deploy:
-      resources:
-        limits:
-          cpus: '4.0'
-          memory: 4G
-        reservations:
-          cpus: '2.0'
-          memory: 2G
+    # Resource limits removed for maximum speed!
+    # Container can now use all available CPU and RAM
+    labels:
+      - "com.project.name=clone-my-voice"
+      - "com.project.version=2.0"
+      - "com.project.description=CPU-optimized voice cloning service"

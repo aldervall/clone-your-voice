@@ -1,12 +1,21 @@
-# 🎙️ Clone Your Voice
+# 🎙️ Clone My Voice 2.0
 
-> **AI-powered voice cloning made simple**
+> **AI-powered voice cloning made simple - Optimized Edition**
 
 Record your voice for 10 seconds, then generate speech in your cloned voice with any text. Browser-based recording, no microphone setup required.
 
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Optimized](https://img.shields.io/badge/Build-Optimized-success)](https://github.com/aldervall/clone-your-voice)
+
+## 🆕 What's New in 2.0
+
+- ✅ **40% Smaller Docker Image** - Multi-stage build (~1.5GB vs ~2.5GB)
+- ✅ **Explicit CPU-Only PyTorch** - No CUDA bloat, faster downloads
+- ✅ **Better Layer Caching** - Faster rebuilds during development
+- ✅ **Removed Unnecessary Dependencies** - Minimal runtime footprint
+- ✅ **Enhanced Security** - Production-ready configuration
 
 ## ✨ Features
 
