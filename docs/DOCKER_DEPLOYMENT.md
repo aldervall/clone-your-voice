@@ -89,6 +89,7 @@ Available options:
 ```yaml
 environment:
   - FLASK_ENV=production    # or 'development' for debug mode
+  - BASE_URL=               # Optional: Base URL for frontend (e.g., https://yourdomain.com)
   - PYTHONUNBUFFERED=1      # Real-time logs
 ```
 

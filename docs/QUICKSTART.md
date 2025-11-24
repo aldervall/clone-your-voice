@@ -69,6 +69,12 @@ venv\Scripts\activate
 
 #### Step 2: Install Dependencies
 
+**System Requirements (Manual Setup Only):**
+You must have `ffmpeg` installed on your system to process audio files.
+- **Ubuntu/Debian:** `sudo apt-get install ffmpeg`
+- **macOS:** `brew install ffmpeg`
+- **Windows:** Download and install from [ffmpeg.org](https://ffmpeg.org/download.html)
+
 ```bash
 # Upgrade pip
 pip install --upgrade pip
@@ -164,6 +170,7 @@ FLASK_ENV=development          # development, production, testing
 # Server Configuration
 HOST=0.0.0.0                   # Host to bind to
 PORT=5000                      # Port to run on
+BASE_URL=                      # Optional: Base URL for frontend (e.g., https://yourdomain.com)
 
 # TTS Configuration
 TTS_BACKBONE_REPO=neuphonic/neutts-air    # Model repository

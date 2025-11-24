@@ -33,6 +33,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     espeak \
     libsndfile1 \
+    ffmpeg \
     curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean

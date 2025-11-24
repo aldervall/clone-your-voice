@@ -46,6 +46,7 @@ class BaseConfig:
     # Server Configuration
     HOST = os.getenv("HOST", "0.0.0.0")
     PORT = int(os.getenv("PORT", "5000"))
+    BASE_URL = os.getenv("BASE_URL", "")
 
     @classmethod
     def ensure_directories(cls):

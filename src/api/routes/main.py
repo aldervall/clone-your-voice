@@ -16,7 +16,8 @@ main_bp = Blueprint('main', __name__)
 def index():
     """Main page - streamlined interface"""
     logger.debug("Serving main page")
-    return render_template('index.html')
+    config = get_config()
+    return render_template('index.html', base_url=config.BASE_URL)
 
 
 @main_bp.route('/api/samples')

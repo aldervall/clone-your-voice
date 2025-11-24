@@ -32,7 +32,7 @@ def validate_audio_file(
         Tuple of (is_valid, error_message)
     """
     if allowed_extensions is None:
-        allowed_extensions = {'wav', 'mp3', 'flac', 'ogg'}
+        allowed_extensions = {'wav', 'mp3', 'flac', 'ogg', 'webm'}
 
     # Check if file exists
     if not file or file.filename == '':

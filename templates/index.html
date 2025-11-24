@@ -230,6 +230,16 @@
     </div>
 
     <script>
+        // Configuration from backend
+        const BASE_URL = "{{ base_url }}";
+
+        function getUrl(path) {
+            if (!BASE_URL) return path;
+            const base = BASE_URL.replace(/\/$/, '');
+            const p = path.startsWith('/') ? path : '/' + path;
+            return base + p;
+        }
+
         // Reference prompts pool (longer sentences for better voice capture)
         const prompts = {
             "en-us": [
@@ -443,7 +453,7 @@
 
             try {
                 // Start synthesis
-                const response = await fetch('/api/synthesize', {
+                const response = await fetch(getUrl('/api/synthesize'), {
                     method: 'POST',
                     body: formData
                 });
@@ -454,7 +464,7 @@
                 }
 
                 // Monitor progress
-                const eventSource = new EventSource(`/api/progress/${data.session_id}`);
+                const eventSource = new EventSource(getUrl(`/api/progress/${data.session_id}`));
 
                 eventSource.onmessage = function(event) {
                     const update = JSON.parse(event.data);
@@ -477,9 +487,9 @@
 
                         // Show result
                         const resultAudio = document.getElementById('resultAudio');
-                        resultAudio.src = `/api/play/${update.output_file}`;
+                        resultAudio.src = getUrl(`/api/play/${update.output_file}`);
                         document.getElementById('downloadButton').onclick = () => {
-                            window.location.href = `/api/download/${update.output_file}`;
+                            window.location.href = getUrl(`/api/download/${update.output_file}`);
                         };
                         goToStep(3);
                     }
