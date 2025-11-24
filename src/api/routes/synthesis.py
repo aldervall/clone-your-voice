@@ -37,6 +37,7 @@ def synthesize():
         ref_text = request.form.get('ref_text', '').strip()
         use_sample = request.form.get('use_sample', 'false') == 'true'
         sample_name = request.form.get('sample_name', '')
+        language = request.form.get('language', 'en-us')
 
         # Validate input text
         is_valid, error_msg = validate_text_input(input_text, field_name="Input text")
@@ -89,7 +90,8 @@ def synthesize():
             ref_audio_path=ref_audio_path,
             backbone=config.TTS_BACKBONE_REPO,
             max_tokens=config.TTS_MAX_TOKENS,
-            session_id=session_id
+            session_id=session_id,
+            language=language
         )
 
         # Start synthesis in background

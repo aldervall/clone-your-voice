@@ -60,8 +60,8 @@ class NeuTTSAir:
         # Initialize components
         logger.info("Initializing NeuTTS-Air engine")
 
-        # Load phonemizer
-        self.phonemizer = Phonemizer()
+        # Initialize phonemizers cache
+        self.phonemizers = {}
 
         # Load backbone model
         self._load_backbone(backbone_repo, backbone_device)
@@ -90,6 +90,13 @@ class NeuTTSAir:
         )
 
         logger.info("NeuTTS-Air engine initialized successfully")
+
+    def get_phonemizer(self, language: str) -> Phonemizer:
+        """Get or create phonemizer for specific language"""
+        if language not in self.phonemizers:
+            logger.info(f"Initializing phonemizer for language: {language}")
+            self.phonemizers[language] = Phonemizer(language=language)
+        return self.phonemizers[language]
 
     def _load_backbone(self, backbone_repo: str, backbone_device: str):
         """Load backbone model (transformer or GGUF)"""
@@ -181,7 +188,8 @@ class NeuTTSAir:
         self,
         text: str,
         ref_codes: np.ndarray | torch.Tensor,
-        ref_text: str
+        ref_text: str,
+        language: str = "en-us"
     ) -> np.ndarray:
         """
         Perform inference to generate speech from text
@@ -190,15 +198,19 @@ class NeuTTSAir:
             text: Input text to be converted to speech
             ref_codes: Encoded reference audio
             ref_text: Reference text for reference audio
+            language: Language code for phonemization (default: en-us)
 
         Returns:
             Generated speech waveform
         """
-        logger.info(f"Running TTS inference for text: '{text[:50]}...'")
+        logger.info(f"Running TTS inference for text: '{text[:50]}...' in {language}")
+
+        # Get phonemizer for language
+        phonemizer = self.get_phonemizer(language)
 
         # Phonemize texts
-        ref_text_phones = self.phonemizer.phonemize(ref_text)
-        input_text_phones = self.phonemizer.phonemize(text)
+        ref_text_phones = phonemizer.phonemize(ref_text)
+        input_text_phones = phonemizer.phonemize(text)
 
         # Generate tokens
         if self._is_quantized_model:
@@ -222,7 +234,8 @@ class NeuTTSAir:
         self,
         text: str,
         ref_codes: np.ndarray | torch.Tensor,
-        ref_text: str
+        ref_text: str,
+        language: str = "en-us"
     ) -> Generator[np.ndarray, None, None]:
         """
         Perform streaming inference to generate speech
@@ -231,6 +244,7 @@ class NeuTTSAir:
             text: Input text to be converted to speech
             ref_codes: Encoded reference audio
             ref_text: Reference text for reference audio
+            language: Language code for phonemization (default: en-us)
 
         Yields:
             Audio chunks as numpy arrays
@@ -238,11 +252,14 @@ class NeuTTSAir:
         if not self._is_quantized_model:
             raise NotImplementedError("Streaming is not implemented for the torch backend!")
 
-        logger.info(f"Running streaming TTS inference for text: '{text[:50]}...'")
+        logger.info(f"Running streaming TTS inference for text: '{text[:50]}...' in {language}")
+
+        # Get phonemizer for language
+        phonemizer = self.get_phonemizer(language)
 
         # Phonemize texts
-        ref_text_phones = self.phonemizer.phonemize(ref_text)
-        input_text_phones = self.phonemizer.phonemize(text)
+        ref_text_phones = phonemizer.phonemize(ref_text)
+        input_text_phones = phonemizer.phonemize(text)
 
         # Get streaming token generator
         token_generator = self.inference_engine.infer_stream(

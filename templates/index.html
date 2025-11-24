@@ -95,6 +95,18 @@
             border-radius: 2px;
             transition: height 0.1s;
         }
+        .language-select-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .language-select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            background-color: white;
+            min-width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -114,6 +126,19 @@
         <!-- Step 1: Record Voice -->
         <div class="card step active" id="step1">
             <h2>Step 1: Record Your Voice</h2>
+            
+            <div class="language-select-container">
+                <label for="languageSelect">Select Language: </label>
+                <select id="languageSelect" class="language-select">
+                    <option value="en-us">English (US)</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr-fr">French</option>
+                    <option value="de">German</option>
+                    <option value="it">Italian</option>
+                    <option value="pt-br">Portuguese (Brazil)</option>
+                </select>
+            </div>
+
             <p>Read the following text aloud while recording:</p>
 
             <div class="prompt-box">
@@ -206,18 +231,50 @@
 
     <script>
         // Reference prompts pool (longer sentences for better voice capture)
-        const prompts = [
-            "The quick brown fox jumps over the lazy dog while the moon shines brightly in the night sky.",
-            "Technology is rapidly changing the world in amazing and unexpected ways every single day.",
-            "This is a comprehensive test of the advanced voice cloning system that uses artificial intelligence.",
-            "Artificial intelligence and machine learning are truly fascinating fields that continue to evolve.",
-            "Welcome to the exciting future of speech synthesis and natural language processing technology.",
-            "The sun rises early in the morning sky, painting beautiful colors across the horizon.",
-            "Reading books regularly helps expand our knowledge and improves our understanding of the world.",
-            "Music brings joy and happiness to people everywhere, connecting cultures across the globe.",
-            "Learning new things every day keeps life interesting and helps us grow as individuals.",
-            "The powerful ocean waves crash rhythmically against the rocky shore throughout the evening."
-        ];
+        const prompts = {
+            "en-us": [
+                "The quick brown fox jumps over the lazy dog while the moon shines brightly in the night sky.",
+                "Technology is rapidly changing the world in amazing and unexpected ways every single day.",
+                "This is a comprehensive test of the advanced voice cloning system that uses artificial intelligence.",
+                "Artificial intelligence and machine learning are truly fascinating fields that continue to evolve.",
+                "Welcome to the exciting future of speech synthesis and natural language processing technology."
+            ],
+            "es": [
+                "El veloz zorro marrón salta sobre el perro perezoso mientras la luna brilla intensamente.",
+                "La tecnología está cambiando rápidamente el mundo de maneras asombrosas e inesperadas cada día.",
+                "Esta es una prueba integral del avanzado sistema de clonación de voz que utiliza inteligencia artificial.",
+                "La inteligencia artificial y el aprendizaje automático son campos verdaderamente fascinantes.",
+                "Bienvenidos al emocionante futuro de la síntesis de voz y el procesamiento del lenguaje natural."
+            ],
+            "fr-fr": [
+                "Le vif renard brun saute par-dessus le chien paresseux alors que la lune brille dans le ciel nocturne.",
+                "La technologie change rapidement le monde de manière étonnante et inattendue chaque jour.",
+                "Ceci est un test complet du système avancé de clonage vocal utilisant l'intelligence artificielle.",
+                "L'intelligence artificielle et l'apprentissage automatique sont des domaines vraiment fascinants.",
+                "Bienvenue dans le futur passionnant de la synthèse vocale et du traitement du langage naturel."
+            ],
+            "de": [
+                "Der schnelle braune Fuchs springt über den faulen Hund, während der Mond hell am Nachthimmel scheint.",
+                "Technologie verändert die Welt jeden Tag auf erstaunliche und unerwartete Weise.",
+                "Dies ist ein umfassender Test des fortschrittlichen Sprachklonsystems mit künstlicher Intelligenz.",
+                "Künstliche Intelligenz und maschinelles Lernen sind wirklich faszinierende Bereiche.",
+                "Willkommen in der aufregenden Zukunft der Sprachsynthese und der Verarbeitung natürlicher Sprache."
+            ],
+            "it": [
+                "La veloce volpe marrone salta sopra il cane pigro mentre la luna splende luminosa nel cielo notturno.",
+                "La tecnologia sta cambiando rapidamente il mondo in modi sorprendenti e inaspettati ogni giorno.",
+                "Questo è un test completo del sistema avanzato di clonazione vocale che utilizza l'intelligenza artificiale.",
+                "L'intelligenza artificiale e l'apprendimento automatico sono campi davvero affascinanti.",
+                "Benvenuti nell'emozionante futuro della sintesi vocale e dell'elaborazione del linguaggio naturale."
+            ],
+            "pt-br": [
+                "A rápida raposa marrom pula sobre o cão preguiçoso enquanto a lua brilha intensamente no céu noturno.",
+                "A tecnologia está mudando rapidamente o mundo de maneiras surpreendentes e inesperadas todos os dias.",
+                "Este é um teste abrangente do sistema avançado de clonagem de voz que usa inteligência artificial.",
+                "Inteligência artificial e aprendizado de máquina são campos verdadeiramente fascinantes.",
+                "Bem-vindo ao futuro emocionante da síntese de fala e tecnologia de processamento de linguagem natural."
+            ]
+        };
 
         // Global variables
         let mediaRecorder;
@@ -225,16 +282,29 @@
         let recordedBlob = null;
         let currentPrompt = "";
         let recordingDuration = 10000; // 10 seconds
+        let currentLanguage = "en-us";
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Load random prompt
-            currentPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-            document.getElementById('promptText').textContent = currentPrompt;
+            // Setup language selector
+            const languageSelect = document.getElementById('languageSelect');
+            languageSelect.addEventListener('change', function(e) {
+                currentLanguage = e.target.value;
+                updatePrompt();
+            });
+
+            // Initial prompt load
+            updatePrompt();
 
             // Setup record button
             document.getElementById('recordButton').addEventListener('click', toggleRecording);
         });
+
+        function updatePrompt() {
+            const langPrompts = prompts[currentLanguage] || prompts["en-us"];
+            currentPrompt = langPrompts[Math.floor(Math.random() * langPrompts.length)];
+            document.getElementById('promptText').textContent = currentPrompt;
+        }
 
         // Step navigation
         function goToStep(stepNumber) {
@@ -360,6 +430,7 @@
             formData.append('ref_audio', recordedBlob, 'recording.wav');
             formData.append('use_sample', 'false');
             formData.append('backbone', 'neuphonic/neutts-air');
+            formData.append('language', currentLanguage);
 
             const progressSection = document.getElementById('progressSection');
             const progressBar = document.getElementById('progressBar');

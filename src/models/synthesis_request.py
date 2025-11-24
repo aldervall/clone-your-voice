@@ -21,6 +21,7 @@ class SynthesisRequest:
     # Optional model configuration
     backbone: str = "neuphonic/neutts-air"
     max_tokens: int = 1200
+    language: str = "en-us"
 
     # Session tracking
     session_id: Optional[str] = None

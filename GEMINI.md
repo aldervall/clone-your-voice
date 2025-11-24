@@ -67,4 +67,5 @@ Access the UI at `http://localhost:5000`.
 
 ## Current Status
 *   **Refactored:** The project has recently undergone a major refactor to clean up the architecture, remove unused files, and optimize the Docker build.
+*   **Feature Added:** Multilingual support implemented (Nov 2025). Supports En, Es, Fr, De, It, Pt-Br.
 *   **Operational:** The codebase is ready for deployment or local testing.

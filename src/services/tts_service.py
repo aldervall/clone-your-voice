@@ -116,7 +116,7 @@ class TTSService:
                     f'Generating speech (chunk {i+1}/{total_chunks})...',
                     int(progress)
                 )
-                wav = tts.infer(chunk, ref_codes, request.ref_text)
+                wav = tts.infer(chunk, ref_codes, request.ref_text, language=request.language)
                 all_wavs.append(wav)
 
             # Step 5: Combine audio chunks
