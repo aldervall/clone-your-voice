@@ -1,5 +1,5 @@
-# Clone My Voice 2.0 - Optimized CPU-Only Dockerfile
-# Based on NeuTTS-Air with improved efficiency
+# Clone My Voice 2.0 - Refactored Architecture
+# Optimized CPU-Only Dockerfile with clean code structure
 
 FROM python:3.11-slim as builder
 
@@ -41,28 +41,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application code
-COPY neuttsair /app/neuttsair
-COPY web_interface /app/web_interface
-COPY samples /app/samples
+# Copy application code (new structure)
+COPY src/ /app/src/
+COPY templates/ /app/templates/
+COPY main.py /app/
 COPY requirements.txt /app/
 
 # Create necessary directories with proper permissions
-RUN mkdir -p /app/web_interface/uploads /app/web_interface/outputs && \
-    chmod -R 755 /app/web_interface
+RUN mkdir -p /app/data/samples /app/data/uploads /app/data/outputs && \
+    chmod -R 755 /app/data
 
 # Expose port
 EXPOSE 5000
 
 # Environment variables
-ENV FLASK_APP=web_interface/app.py \
+ENV FLASK_ENV=production \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
-    CMD curl -f http://localhost:5000 || exit 1
+    CMD curl -f http://localhost:5000/health || exit 1
 
 # Run the application
-CMD ["python", "-u", "web_interface/app.py"]
+CMD ["python", "-u", "main.py"]

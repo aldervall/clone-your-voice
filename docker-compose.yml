@@ -4,23 +4,23 @@ services:
   clone-my-voice:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: clone-my-voice:2.0
+      dockerfile: docker/Dockerfile
+    image: clone-my-voice:2.0-refactored
     container_name: clone-my-voice-2.0
     ports:
       - "5000:5000"
     volumes:
       # Persist user recordings and generated audio
-      - ./web_interface/uploads:/app/web_interface/uploads
-      - ./web_interface/outputs:/app/web_interface/outputs
+      - ./data/uploads:/app/data/uploads
+      - ./data/outputs:/app/data/outputs
       # Mount samples directory (read-only, for demo voices)
-      - ./samples:/app/samples:ro
+      - ./data/samples:/app/data/samples:ro
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,5 +29,5 @@ services:
     # Container can now use all available CPU and RAM
     labels:
       - "com.project.name=clone-my-voice"
-      - "com.project.version=2.0"
-      - "com.project.description=CPU-optimized voice cloning service"
+      - "com.project.version=2.0-refactored"
+      - "com.project.description=CPU-optimized voice cloning service with clean architecture"
