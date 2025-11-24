@@ -19,7 +19,7 @@ COPY requirements.txt ./
 # Explicitly use CPU-only index for smaller downloads
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
-    torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu && \
+    torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir flask
 
